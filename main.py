@@ -1,5 +1,6 @@
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.feature_extraction.text import TfidfVectorizer
+import os, time, torch, nltk, zipfile, shutil, gdown
 from sklearn.linear_model import LogisticRegression
 from torch.utils.data import Dataset, DataLoader
 from sklearn.naive_bayes import MultinomialNB
@@ -7,7 +8,6 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from sklearn.svm import LinearSVC
 import matplotlib.pyplot as plt
-import os, time, torch, nltk
 import torch.nn as nn
 import seaborn as sns
 import numpy as np
@@ -190,7 +190,45 @@ def train_deep_models(train_texts, train_labels, test_texts, test_labels):
     cnn = CNNClassifier(len(w2i))
     train_pytorch_model(cnn, tl, vl, device)
 
+def download_gdrive_file(file_id, filename):
+    if os.path.exists(filename):
+        print(f"{filename} already exists in CWD.")
+        return
+
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    output = 'aclImdb.zip'
+    gdown.download(url, output, quiet=False)
+
+def prepare_dataset(zip_path):
+    final_dir = './aclImdb'
+    intermediate_dir = './aclImdb_v1'
+
+    if os.path.exists(final_dir):
+        print("Final dataset folder already exists. Skipping.")
+        return
+    else:
+        download_gdrive_file("12XQAilUs1qEtKgg_t8OdBcPSgOdGIJvV", "aclImdb.zip")
+
+    if os.path.exists(intermediate_dir) or os.path.exists(zip_path):
+        if os.path.exists(zip_path):
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall()
+
+        for root, dirs, _ in os.walk('.', topdown=True):
+            for dir_name in dirs:
+                potential_path = os.path.join(root, dir_name)
+                nested_acl_path = os.path.join(potential_path, 'aclImdb')
+                if os.path.exists(nested_acl_path):
+                    shutil.move(nested_acl_path, final_dir)
+                    shutil.rmtree(potential_path)
+                    print("Unzip and move completed.")
+                    break
+
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
+
 def main():
+    prepare_dataset('aclImdb.zip')
     ensure_nltk_data()
     print("Loading data…")
     train_texts, train_labels = load_imdb_data('aclImdb/train')
