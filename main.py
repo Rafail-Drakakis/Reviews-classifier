@@ -1,6 +1,6 @@
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+import os, time, torch, nltk, zipfile, shutil, gdown, pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
-import os, time, torch, nltk, zipfile, shutil, gdown
 from sklearn.linear_model import LogisticRegression
 from torch.utils.data import Dataset, DataLoader
 from sklearn.naive_bayes import MultinomialNB
@@ -137,10 +137,14 @@ def pad_sequences(seqs, max_len=200):
         padded.append(s + [0] * (max_len - len(s)))
     return np.array(padded)
 
-def train_pytorch_model(model, train_loader, test_loader, device, epochs=5, lr=1e-3):
+def train_pytorch_model(model, train_loader, test_loader, device, epochs=5, lr=1e-3, save_path='best_model.pt'):
     model.to(device)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCELoss()
+
+    best_acc = 0.0
+    best_model_state = None
+
     for ep in range(1, epochs + 1):
         model.train()
         total_loss = 0
@@ -153,24 +157,36 @@ def train_pytorch_model(model, train_loader, test_loader, device, epochs=5, lr=1
             total_loss += loss.item()
         print(f"Epoch {ep}/{epochs} train loss: {total_loss / len(train_loader):.4f}")
 
-    model.eval()
-    all_preds, all_y = [], []
-    with torch.no_grad():
-        for xb, yb in test_loader:
-            xb = xb.to(device)
-            preds = (model(xb) > 0.5).long().cpu().numpy()
-            all_preds.extend(preds.tolist())
-            all_y.extend(yb.numpy().astype(int).tolist())
-    acc = accuracy_score(all_y, all_preds)
-    print(f">>> PyTorch model test acc: {acc:.4f}")
-    cm = confusion_matrix(all_y, all_preds)
-    save_confusion(cm, ['neg', 'pos'], model.__class__.__name__, f"{model.__class__.__name__}_confusion.png")
-    return model, acc
+        model.eval()
+        all_preds, all_y = [], []
+        with torch.no_grad():
+            for xb, yb in test_loader:
+                xb = xb.to(device)
+                preds = (model(xb) > 0.5).long().cpu().numpy()
+                all_preds.extend(preds.tolist())
+                all_y.extend(yb.numpy().astype(int).tolist())
+
+        acc = accuracy_score(all_y, all_preds)
+        print(f"Validation Accuracy: {acc:.4f}")
+
+        if acc > best_acc:
+            best_acc = acc
+            best_model_state = model.state_dict()
+            torch.save(best_model_state, save_path)
+            print(f"Saved best model with acc = {acc:.4f}")
+
+    print(f"Best test accuracy: {best_acc:.4f}")
+    model.load_state_dict(torch.load(save_path))
+    return model, best_acc
 
 def train_deep_models(train_texts, train_labels, test_texts, test_labels):
     tok_train = [t.split() for t in train_texts]
     tok_test = [t.split() for t in test_texts]
     w2i = build_vocab(tok_train)
+
+    with open('vocab.pkl', 'wb') as f:
+        pickle.dump(w2i, f)
+
     seq_train = pad_sequences(texts_to_indices(tok_train, w2i))
     seq_test = pad_sequences(texts_to_indices(tok_test, w2i))
 
@@ -201,18 +217,14 @@ def download_gdrive_file(file_id, filename):
 
 def prepare_dataset(zip_path):
     final_dir = './aclImdb'
-    intermediate_dir = './aclImdb_v1'
-
+    
     if os.path.exists(final_dir):
         print("Final dataset folder already exists. Skipping.")
         return
     else:
         download_gdrive_file("12XQAilUs1qEtKgg_t8OdBcPSgOdGIJvV", "aclImdb.zip")
-
-    if os.path.exists(intermediate_dir) or os.path.exists(zip_path):
-        if os.path.exists(zip_path):
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall()
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall()
 
         for root, dirs, _ in os.walk('.', topdown=True):
             for dir_name in dirs:
@@ -223,9 +235,6 @@ def prepare_dataset(zip_path):
                     shutil.rmtree(potential_path)
                     print("Unzip and move completed.")
                     break
-
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
 
 def main():
     prepare_dataset('aclImdb.zip')
