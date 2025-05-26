@@ -10,7 +10,7 @@
 \geometry{margin=1in}
 
 \title{%
-  \textbf{P15: Sentiment Classification of Texts}\\
+  \textbf{P15: Sentiment Classification of IMDb Movie Reviews}\\
   \vspace{0.5em}
   \large CS485 -- Project Report
 }
@@ -26,12 +26,7 @@
 \thispagestyle{empty}
 
 \begin{abstract}
-  We implement and compare three classes of sentiment‐classification pipelines on the IMDb Movie Reviews dataset:
-  \begin{enumerate}
-    \item \emph{Classical ML} using TF–IDF (Term Frequency–Inverse Document Frequency) and Logistic Regression, Naive Bayes, Linear SVM
-    \item \emph{Deep Learning} using PyTorch LSTM and 1D‐CNN with learned embeddings
-  \end{enumerate}
-  We evaluate each on accuracy, precision/recall/F1 (for classical), and inference or epoch time.  
+  We present an end-to-end pipeline for sentiment classification of the IMDb Movie Reviews dataset using both classical and deep learning techniques. We preprocess the data, extract features, train multiple models, and evaluate their performance. Classical ML models include Logistic Regression, Naive Bayes, and Linear SVM trained on TF–IDF vectors. Deep learning models include LSTM and 1D-CNN built using PyTorch with learned embeddings. We analyze accuracy, confusion matrices, and inference time. Our results show strong performance from classical methods, competitive CNN results, and poor LSTM learning without pretrained embeddings or tuning.
 \end{abstract}
 
 \newpage
@@ -39,50 +34,55 @@
 \newpage
 
 \section{Introduction}
-Sentiment analysis classifies text as positive or negative. We use the standard IMDb review benchmark to compare:
+Sentiment analysis seeks to classify text into categories such as positive or negative sentiment. The IMDb dataset offers a widely used benchmark of 50,000 labeled movie reviews. We compare two families of sentiment classification models:
 \begin{itemize}
-  \item \textbf{Classical ML}: TF–IDF $\to$ Logistic Regression / Naive Bayes / SVM
-  \item \textbf{Deep Learning}: LSTM \& 1D‐CNN over a learned embedding layer
+  \item \textbf{Classical ML}: Feature engineering with TF–IDF followed by Logistic Regression, Naive Bayes, and Linear SVM.
+  \item \textbf{Deep Learning}: LSTM and CNN architectures with learned word embeddings and end-to-end training in PyTorch.
 \end{itemize}
 
 \section{Dataset}
 \begin{itemize}
-  \item \textbf{Name:} IMDb Movie Reviews  
-  \item \textbf{Size:} 50000 total (25000 train, 25000 test)  
-  \item \textbf{Labels:} Positive (1) / Negative (0)  
+  \item \textbf{Name:} IMDb Large Movie Review Dataset
+  \item \textbf{Size:} 25,000 training and 25,000 test samples
+  \item \textbf{Labels:} Binary sentiment – Positive (1), Negative (0)
   \item \textbf{Source:} \url{https://ai.stanford.edu/~amaas/data/sentiment/}
 \end{itemize}
 
-\section{Implementation Details}
-\subsection{Preprocessing \& Vocabulary}
+\section{Preprocessing}
 \begin{itemize}
-  \item NLTK downloads guarded for \texttt{punkt}, \texttt{punkt\_tab}, \texttt{stopwords}.
-  \item Lowercasing, tokenization (\texttt{word\_tokenize}), alpha‐filter, stopword removal.
-  \item For deep models: build vocab from training tokens (min\_freq=2, max\_size=20000), pad/truncate to length 200.
+  \item Downloaded and extracted from Google Drive.
+  \item Text normalization: lowercasing, tokenization (using NLTK \texttt{word\_tokenize}), removal of punctuation, numbers, and stopwords.
+  \item For deep models: vocabulary built with a minimum frequency of 2 and capped at 20,000 tokens. Input sequences are padded or truncated to a maximum length of 200.
 \end{itemize}
 
-\subsection{Feature Extraction}
+\section{Feature Engineering}
 \begin{itemize}
-  \item \textbf{Classical:} TF–IDF (unigrams, max\_features=5000).
-  \item \textbf{Deep:} learned \texttt{nn.Embedding} (dim=100).
+  \item \textbf{Classical ML:} TF–IDF vectorization with unigrams and 5,000 max features.
+  \item \textbf{Deep Learning:} Trainable embedding layers of dimension 100.
 \end{itemize}
 
-\subsection{Models \& Hyperparams}
+\section{Model Architectures \& Training Details}
+\subsection{Classical Models}
 \begin{description}
-  \item[LogisticRegression] $C=1.0$, $\ell_2$, max\_iter=1000.
-  \item[MultinomialNB] $\alpha=1.0$.
-  \item[LinearSVC] $C=1.0$.
-  \item[LSTM] embed\_dim=100, hidden\_dim=128, single layer, trained 5 epochs, Adam lr=1e-3.
-  \item[CNN] embed\_dim=100, 3 conv‐filters (sizes 3,4,5) each 100 channels, train 5 epochs.
+  \item[Logistic Regression:] $\ell_2$ regularization, $C = 1.0$, max\_iter = 1000
+  \item[Multinomial Naive Bayes:] $\alpha = 1.0$
+  \item[Linear SVM:] $C = 1.0$
 \end{description}
 
-\section{Results}
+\subsection{Deep Learning Models}
+\begin{itemize}
+  \item \textbf{Embedding Layer:} Embedding dimension = 100
+  \item \textbf{LSTM:} Single-layer LSTM with 128 hidden units; classifier uses final hidden state
+  \item \textbf{CNN:} 1D convolutions with filter sizes [3, 4, 5], 100 filters each; followed by max pooling and a fully connected layer
+  \item \textbf{Training:} Optimized with Adam, learning rate = $1e^{-3}$, 5 epochs, batch size = 64
+\end{itemize}
 
-\subsection{Classical ML}
+\section{Results}
+\subsection{Classical Machine Learning}
 
 \begin{table}[H]
   \centering
-  \caption{Accuracy \& Inference Time (ms/sample) on 25000 review test set}
+  \caption{Accuracy and Inference Time (ms/sample) on 25,000 test samples}
   \label{tab:classical-summary}
   \begin{tabular}{lcc}
     \toprule
@@ -97,8 +97,7 @@ Sentiment analysis classifies text as positive or negative. We use the standard 
 
 \begin{table}[H]
   \centering
-  \caption{Classification report for Logistic Regression}
-  \label{tab:clf-report}
+  \caption{Classification Report for Logistic Regression}
   \begin{tabular}{lcccc}
     \toprule
     \textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} & \textbf{Support} \\
@@ -114,65 +113,53 @@ Sentiment analysis classifies text as positive or negative. We use the standard 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\textwidth]{figures/LogReg_confusion.png}
-  \caption{Logistic Regression confusion matrix: TN=10958, FP=1542, FN=1475, TP=11025.}
-  \label{fig:confusion_matrix_logreg}
+  \caption{Confusion matrix for Logistic Regression}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.45\textwidth]{figures/NaiveBayes_confusion.png}
   \includegraphics[width=0.45\textwidth]{figures/LinearSVM_confusion.png}
-  \caption{Confusion matrices for Multinomial Naïve Bayes (left) and Linear SVM (right).}
-  \label{fig:confusion_matrix_nb_svm}
+  \caption{Confusion matrices: Naïve Bayes (left), Linear SVM (right)}
 \end{figure}
 
 \subsection{Deep Learning}
 
 \begin{table}[H]
   \centering
-  \caption{Test Accuracy after 5 epochs (embed\_dim=100)}
+  \caption{Test Accuracy for Deep Models}
   \label{tab:dl-results}
   \begin{tabular}{lcc}
     \toprule
-    \textbf{Model} & \textbf{Test Accuracy} & \textbf{Notes} \\
+    \textbf{Model} & \textbf{Accuracy} & \textbf{Notes} \\
     \midrule
-    LSTM   & 0.511 & Final hidden‐state classifier; underperforms \\
-    CNN    & 0.856 & Global max‐pooled conv features \\
+    LSTM & 0.511 & Underfitting, poor learning across epochs \\
+    CNN  & 0.856 & Competitive with classical models \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-\noindent
-Both models were trained on batches of 64, padded to length 200, using Adam (lr=1e-3). No pretrained embeddings were used. LSTM underperformed significantly, due to insufficient learning.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.45\textwidth]{figures/LSTMClassifier_confusion.png}
   \includegraphics[width=0.45\textwidth]{figures/CNNClassifier_confusion.png}
-  \caption{Confusion matrices for LSTM (left) and CNN (right).}
-  \label{fig:confusion_matrix_lstm_cnn}
+  \caption{Confusion matrices: LSTM (left), CNN (right)}
 \end{figure}
 
 \section{Discussion}
 \begin{itemize}
-  \item \textbf{Classical vs.\ Deep:}  
+  \item \textbf{Inference speed:} Naïve Bayes is fastest (0.13ms/sample), followed by Logistic Regression (0.47ms), and Linear SVM (0.65ms).
+  \item \textbf{Accuracy:} Logistic Regression is best overall (0.88), CNN comes close (0.856), and LSTM performs poorly (0.511).
+  \item \textbf{Deep Learning Issues:}
     \begin{itemize}
-      \item TF–IDF and Logistic Regression is extremely fast at inference (0.47 ms/sample) with 0.88 accuracy.
-      \item CNN improves over classical (0.856 acc), but LSTM underperforms (0.511 acc).
+      \item LSTM struggles due to lack of pretraining, insufficient data augmentation, and shallow architecture.
+      \item CNN benefits from local n-gram pattern detection via convolution and max pooling.
     \end{itemize}
-  \item \textbf{Error Analysis:}  
-    \begin{itemize}
-      \item Classical models struggle with negation (“not good”) and sarcasm.
-      \item LSTM has a problem with vanishing gradients and poor convergence.
-      \item Short reviews (< 20 words) are most error‐prone across all models.
-    \end{itemize}
-  \item \textbf{Practical trade‐offs:}  
-    \begin{itemize}
-      \item For real‐time scoring, Logistic Regression or CNN is better.
-    \end{itemize}
+  \item \textbf{Generalization:} CNN is more robust than LSTM but needs GPU for fast training.
+  \item \textbf{Short reviews:} Posed challenges for all models, especially with sarcasm or implicit sentiment.
 \end{itemize}
 
 \section{Conclusion}
-We implemented a single‐script pipeline that runs classical and deep methods end‐to‐end on the IMDb dataset. While TF–IDF and Logistic Regression remains a strong, fast baseline (0.88 acc) and CNNs improve slightly (0.856). The LSTM model, despite theoretical potential, failed to train effectively.
+We implemented a full classification pipeline using classical and deep learning models for sentiment analysis on the IMDb dataset. Classical methods with TF–IDF and Logistic Regression remain strong baselines for accuracy and speed. While the CNN shows promising results, the LSTM architecture underperformed due to training instability and lack of optimization. Further improvements may include hyperparameter tuning, pretrained embeddings, and attention mechanisms.
 
 \end{document}
