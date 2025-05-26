@@ -77,6 +77,36 @@ Sentiment analysis seeks to classify text into categories such as positive or ne
   \item \textbf{Training:} Optimized with Adam, learning rate = $1e^{-3}$, 5 epochs, batch size = 64
 \end{itemize}
 
+\section{Implementation Details}
+\subsection{Preprocessing \& Vocabulary}
+\begin{itemize}
+  \item NLTK downloads handled programmatically for required packages: \texttt{punkt}, \texttt{punkt\_tab}, \texttt{stopwords}.
+  \item Texts are lowercased, tokenized (using \texttt{word\_tokenize}), filtered for alphabetic words, and cleaned of English stopwords.
+  \item For deep models: a vocabulary is built from training tokens with \texttt{min\_freq=2}, \texttt{max\_size=20000}. Sequences are padded or truncated to a fixed length of 200.
+\end{itemize}
+
+\subsection{Feature Extraction}
+\begin{itemize}
+  \item \textbf{Classical ML:} TF–IDF vectorization (unigrams only), limited to the top 5000 features.
+  \item \textbf{Deep Learning:} Each word is mapped to a trainable embedding of dimension 100.
+\end{itemize}
+
+\subsection{Prediction Script}
+A separate standalone script, \texttt{predict.py}, is provided for inference on new review texts using the trained CNN model.
+
+\begin{itemize}
+  \item \textbf{Architecture:} Re-implements the exact CNNClassifier architecture used during training.
+  \item \textbf{Workflow:}
+    \begin{enumerate}
+      \item Loads the vocabulary from \texttt{vocab.pkl}.
+      \item Loads the trained model weights from \texttt{model.pt}.
+      \item Preprocesses the input review with the same tokenization and stopword removal.
+      \item Converts the token sequence to indices and pads to length 200.
+      \item Performs inference using PyTorch (CPU or CUDA).
+      \item Outputs the predicted label (positive or negative) and the confidence score.
+    \end{enumerate}
+\end{itemize}
+
 \section{Results}
 \subsection{Classical Machine Learning}
 
