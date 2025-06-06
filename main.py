@@ -137,7 +137,7 @@ def pad_sequences(seqs, max_len=200):
         padded.append(s + [0] * (max_len - len(s)))
     return np.array(padded)
 
-def train_pytorch_model(model, train_loader, test_loader, device, epochs=5, lr=1e-3, save_path='best_model.pt'):
+def train_pytorch_model(model, train_loader, test_loader, device, epochs=5, lr=1e-3, save_path='model.pt'):
     model.to(device)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCELoss()
