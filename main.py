@@ -217,8 +217,10 @@ def download_gdrive_file(file_id, filename):
 
 def prepare_dataset(zip_path):
     final_dir = './aclImdb'
-    
-    if os.path.exists(final_dir):
+    if os.path.exists("model.pt"):
+        print("Model already exists. Skipping dataset preparation.")
+        return
+    elif os.path.exists(final_dir):
         print("Final dataset folder already exists. Skipping.")
         return
     else:

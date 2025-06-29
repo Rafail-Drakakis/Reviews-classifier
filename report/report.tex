@@ -40,7 +40,18 @@ Sentiment analysis seeks to classify text into categories such as positive or ne
   \item \textbf{Deep Learning}: LSTM and CNN architectures with learned word embeddings and end-to-end training in PyTorch.
 \end{itemize}
 
-\section{Dataset}
+\section{Related Work}
+
+Early approaches to movie‐review sentiment analysis relied on surface‐level representations such as bag‐of‐words and handcrafted lexicons. Pang and Lee demonstrated that simple unigram and bigram features fed into classical classifiers (e.g., Naïve Bayes, SVM) already achieved strong baselines on the IMDb dataset \cite{Pang2002}. Lexicon-based methods such as VADER and SentiWordNet leverage word‐level sentiment scores, offering interpretability but often struggling with context and negation.
+
+The advent of distributed word embeddings (e.g., Word2Vec, GloVe) enabled neural models to capture semantic similarity. Kim popularized one-layer CNNs over word embeddings for sentence classification, showing that shallow convolutional filters can extract n-gram features effectively \cite{Kim2014}. Subsequent work introduced recurrent architectures—particularly LSTMs and GRUs—to model sequential dependencies and long-range context \cite{Tang2015}.
+
+More recent studies incorporate hierarchical and attention-based mechanisms. Yang et al.\ proposed a Hierarchical Attention Network that applies attention at both word and sentence levels, improving document-level sentiment classification \cite{Yang2016}. The Transformer architecture introduced self-attention, laying the groundwork for large pretrained language models \cite{Vaswani2017}, and fine-tuning BERT and RoBERTa has since set new state‐of‐the‐art results on IMDb and related benchmarks \cite{Devlin2019, Liu2019}.
+
+Finally, ensemble and hybrid methods—combining neural models with lexicon features or classical classifiers—have been shown to further boost robustness, particularly on noisy and out‐of‐domain data, motivating our exploration of contextual embeddings, attention layers, and ensemble strategies.
+
+\section{Methodology}
+\subsection{Dataset}
 \begin{itemize}
   \item \textbf{Name:} IMDb Large Movie Review Dataset
   \item \textbf{Size:} 25,000 training and 25,000 test samples
@@ -48,28 +59,22 @@ Sentiment analysis seeks to classify text into categories such as positive or ne
   \item \textbf{Source:} \url{https://ai.stanford.edu/~amaas/data/sentiment/}
 \end{itemize}
 
-\section{Preprocessing}
+\subsection{Preprocessing}
 \begin{itemize}
-  \item Downloaded and extracted from Google Drive.
+  \item Dataset is downloaded and extracted from Google Drive.
   \item Text normalization: lowercasing, tokenization (using NLTK \texttt{word\_tokenize}), removal of punctuation, numbers, and stopwords.
   \item For deep models: vocabulary built with a minimum frequency of 2 and capped at 20,000 tokens. Input sequences are padded or truncated to a maximum length of 200.
 \end{itemize}
 
-\section{Feature Engineering}
-\begin{itemize}
-  \item \textbf{Classical ML:} TF–IDF vectorization with unigrams and 5,000 max features.
-  \item \textbf{Deep Learning:} Trainable embedding layers of dimension 100.
-\end{itemize}
-
-\section{Model Architectures \& Training Details}
-\subsection{Classical Models}
+\subsection{Model Architectures \& Training Details}
+\subsubsection{Classical Models}
 \begin{description}
   \item[Logistic Regression:] $\ell_2$ regularization, $C = 1.0$, max\_iter = 1000
   \item[Multinomial Naive Bayes:] $\alpha = 1.0$
   \item[Linear SVM:] $C = 1.0$
 \end{description}
 
-\subsection{Deep Learning Models}
+\subsubsection{Deep Learning Models}
 \begin{itemize}
   \item \textbf{Embedding Layer:} Embedding dimension = 100
   \item \textbf{LSTM:} Single-layer LSTM with 128 hidden units; classifier uses final hidden state
@@ -77,7 +82,7 @@ Sentiment analysis seeks to classify text into categories such as positive or ne
   \item \textbf{Training:} Optimized with Adam, learning rate = $1e^{-3}$, 5 epochs, batch size = 64
 \end{itemize}
 
-\section{Implementation Details}
+\section{Implementation}
 \subsection{Preprocessing \& Vocabulary}
 \begin{itemize}
   \item NLTK downloads handled programmatically for required packages: \texttt{punkt}, \texttt{punkt\_tab}, \texttt{stopwords}.
@@ -95,7 +100,7 @@ Sentiment analysis seeks to classify text into categories such as positive or ne
 A separate standalone script, \texttt{predict.py}, is provided for inference on new review texts using the trained CNN model.
 
 \begin{itemize}
-  \item \textbf{Architecture:} Re-implements the exact CNNClassifier architecture used during training.
+  \item \textbf{Architecture:} Re-implements the exact CNN Classifier architecture used during training.
   \item \textbf{Workflow:}
     \begin{enumerate}
       \item Loads the vocabulary from \texttt{vocab.pkl}.
@@ -107,7 +112,7 @@ A separate standalone script, \texttt{predict.py}, is provided for inference on 
     \end{enumerate}
 \end{itemize}
 
-\section{Results}
+\section{Results \& Evaluation}
 \subsection{Classical Machine Learning}
 
 \begin{table}[H]
@@ -189,7 +194,38 @@ A separate standalone script, \texttt{predict.py}, is provided for inference on 
   \item \textbf{Short reviews:} Posed challenges for all models, especially with sarcasm or implicit sentiment.
 \end{itemize}
 
-\section{Conclusion}
-We implemented a full classification pipeline using classical and deep learning models for sentiment analysis on the IMDb dataset. Classical methods with TF–IDF and Logistic Regression remain strong baselines for accuracy and speed. While the CNN shows promising results, the LSTM architecture underperformed due to training instability and lack of optimization. Further improvements may include hyperparameter tuning, pretrained embeddings, and attention mechanisms.
+\section{Conclusion \& Future Work}
+\begin{itemize}
+\item \textbf{Conclusion:} We implemented a full classification pipeline using classical and deep learning models for sentiment analysis on the IMDb dataset. Classical methods with TF–IDF and Logistic Regression remain strong baselines for accuracy and speed. While the CNN shows promising results, the LSTM architecture underperformed due to training instability and lack of optimization. Further improvements may include hyperparameter tuning, pretrained embeddings, and attention mechanisms.
+\item \textbf{Future Work:} Future work could leverage pretrained transformers (e.g., BERT or RoBERTa) fine-tuned on your IMDb data and employ advanced augmentation (like back-translation) for greater robustness, alongside systematic hyperparameter search and regularization to stabilize training. Incorporating attention layers and ensembling neural and classical models can sharpen focus on key sentiment cues and exploit complementary strengths. Detailed error analysis with interpretability tools (e.g., LIME, SHAP) will uncover failure modes, while model compression (quantization, pruning) readies the pipeline for CPU-constrained deployment.
+\end{itemize}
+
+\begin{thebibliography}{9}
+
+\bibitem{Pang2002}
+Bo Pang, Lillian Lee, and Shivakumar Vaithyanathan. 2002. Thumbs up? Sentiment Classification using Machine Learning Techniques. In Proceedings of EMNLP 2002, pages 79–86. Association for Computational Linguistics. \url{https://aclanthology.org/W02-1011/}
+
+\bibitem{Hutto2014}
+C.~J. Hutto and E.~Gilbert. 2014. VADER: A Parsimonious Rule-based Model for Sentiment Analysis of Social Media Text. In Proceedings of the Eighth International Conference on Weblogs and Social Media (ICWSM-14). \url{https://ojs.aaai.org/index.php/ICWSM/article/view/14550}
+
+\bibitem{Kim2014}
+Yoon Kim. 2014. Convolutional Neural Networks for Sentence Classification. In EMNLP 2014. Association for Computational Linguistics. \url{https://aclanthology.org/D14-1181/}
+
+\bibitem{Tang2015}
+Duyu Tang, Bing Qin, and Ting Liu. 2015. Document Modeling with Gated Recurrent Neural Network for Sentiment Classification. Association for Computational Linguistics. \url{https://aclanthology.org/D15-1167/}
+
+\bibitem{Yang2016}
+Zichao Yang, Diyi Yang, Chris Dyer, Xiaodong He, Alex Smola, and Eduard Hovy. 2016. Hierarchical Attention Networks for Document Classification. Association for Computational Linguistics. \url{https://aclanthology.org/N16-1174/}
+
+\bibitem{Vaswani2017}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention Is All You Need.  (NeurIPS 2017). \url{https://papers.neurips.cc/paper/7181-attention-is-all-you-need.pdf}
+
+\bibitem{Devlin2019}
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. Association for Computational Linguistics. \url{https://aclanthology.org/N19-1423/}
+
+\bibitem{Liu2019}
+Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer, and Veselin Stoyanov. 2019. RoBERTa: A Robustly Optimized BERT Pretraining Approach. \url{https://arxiv.org/abs/1907.11692}
+
+\end{thebibliography}
 
 \end{document}
